@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSPM In AWS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font for a clean look */
+        body {
+            font-family: "Inter", sans-serif;
+        }
+        /* Custom styles for image placeholders */
+        .img-placeholder {
+            /* Removed background-color, border, color, display, align-items, justify-content, min-height, text-align */
+            width: 100%;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem; /* Rounded corners */
+            cursor: pointer; /* Indicate clickable */
+            transition: transform 0.2s ease-in-out; /* Smooth hover effect */
+            overflow: hidden; /* Ensure image corners are rounded */
+        }
+        .img-placeholder:hover {
+            transform: scale(1.01); /* Slightly enlarge on hover */
+        }
+        /* Style for code blocks within the documentation */
+        pre {
+            background-color: #1f2937; /* Dark gray for code background */
+            color: #f9fafb; /* Light text for code */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto; /* Enable horizontal scrolling for long lines */
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal specific styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.9); /* Black w/ opacity */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+            transition: opacity 0.3s ease-in-out; /* Smooth fade in/out */
+            opacity: 0; /* Start hidden */
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain; /* Ensure image fits within bounds */
+            border-radius: 0.75rem; /* Rounded corners for the image */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+            transform: scale(0.8); /* Start smaller for zoom effect */
+            transition: transform 0.3s ease-in-out; /* Smooth zoom effect */
+        }
+
+        .modal.show {
+            display: flex; /* Show the modal */
+            opacity: 1; /* Fully opaque */
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1); /* Zoom to actual size */
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+
+    <!-- Header / Navigation Bar -->
+    <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-2xl font-bold text-indigo-600">Cloud Security Posture Management</div>
+        <nav>
+            <ul class="flex space-x-6">
+                <li><a href="#intro" class="text-gray-600 hover:text-indigo-600 transition duration-300">Intro</a></li>
+                <li><a href="#install-tools" class="text-gray-600 hover:text-indigo-600 transition duration-300">Install</a></li>
+                <li><a href="#configure-sso" class="text-gray-600 hover:text-indigo-600 transition duration-300">Configure SSO</a></li>
+                <li><a href="#run-scan" class="text-gray-600 hover:text-indigo-600 transition duration-300">Run Scan</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content Area - Full width -->
+    <main class="py-8 px-4 sm:px-6 lg:px-8">
+
+        <!-- Introduction Section -->
+        <section id="intro" class="max-w-4xl mx-auto mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-6 text-center">
+                Performing a CSPM in AWS
+            </h1>
+            <p class="text-lg text-gray-700">
+                My primary goal here is to identify misconfigurations, compliance violations, and potential security risks within a AWS account.
+            </p>
+            <ul class="list-disc list-inside text-lg text-gray-700 mt-4">
+                <li>Tool of Choice: ScoutSuite An open-source CSPM tool</li>
+                <li>Authentication Method: AWS IAM Identity Center SSO for secure, temporary credentials</li>
+                <li>Operating Environment: Ubuntu Desktop or any similar Linux environment</li>
+            </ul>
+        </section>
+
+        <hr class="my-12 border-gray-300 max-w-4xl mx-auto">
+
+        <!-- New IAM Configuration Section -->
+        <section id="configure-iam" class="max-w-4xl mx-auto mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Understanding & Configuring IAM in the AWS Console</h2>
+            <p class="text-lg text-gray-700 mb-4">
+                Before diving into tool installations and SSO, it's crucial to understand AWS Identity and Access Management IAM. IAM allows you to securely control who is authenticated and authorized to use AWS resources. For security assessments, we typically create an IAM user with read-only permissions.
+            </p>
+            <p class="text-lg text-gray-700 mb-4 text-red-600">
+                Security Best Practice: Never use your AWS root account credentials for daily tasks or programmatic access. Always create dedicated IAM users with the least privilege necessary. For security auditing tools like ScoutSuite, grant only read-only access.
+            </p>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Creating an IAM User for Programmatic Access</h3>
+            <p class="mb-2">Log in to your AWS Management Console using your root account or an administrator IAM user.</p>
+            <p class="mb-2">Navigate to the IAM service you can search for IAM in the console search bar.</p>
+            <div class="img-placeholder" data-img-src="./images/19.png">
+                [Screenshot: AWS Console search bar with "IAM" typed and service highlighted]
+            </div>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Granting Permissions (Least Privilege)</h3>
+                <li>SecurityAudit (Provides read-only access to security-related services)</li>
+                <li>ReadOnlyAccess (Provides read-only access to almost all AWS services)</li>
+            </ul>
+            <p class="text-sm text-gray-600 italic">These policies grant the necessary read-only permissions for ScoutSuite to perform its assessment without allowing any modifications to your AWS resources.</p>
+            <div class="img-placeholder" data-img-src="./images/20.png"></div>
+        </section>
+
+        <!-- 1. Install Tools -->
+        <section id="install-tools" class="max-w-4xl mx-auto mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Getting My Tools Ready - ScoutSuite and AWS CLI v2</h2>
+            <p class="text-lg text-gray-700 mb-4">
+                I set up my Ubuntu environment with the necessary tools. I made sure to install ScoutSuite and ensure the AWS Command Line Interface is the correct version for SSO.
+            </p>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Prepare Python & Install ScoutSuite</h3>
+            <p class="mb-2">1.  Open a Terminal Ctrl + Alt + T.</p>
+            <p class="mb-2">2.  Update packages & install python3-venv:</p>
+            <pre><code>sudo apt update && sudo apt install python3-venv -y</code></pre>
+            <div class="img-placeholder" data-img-src="./images/1.png">
+
+            </div>
+
+            <p class="mb-2">Create & activate a Python virtual environment:</p>
+            <pre><code>python3 -m venv ~/scoutsuite_venv
+source ~/scoutsuite_venv/bin/activate</code></pre>
+            <p class="text-sm text-gray-600 italic">You'll know it's active when your terminal prompt shows (scoutsuite_venv).</p>
+            <div class="img-placeholder" data-img-src="./images/2.png"></div>
+
+            <p class="mb-2">Install ScoutSuite:</p>
+            <pre><code>pip install --upgrade pip
+            pip install scoutsuite</code></pre>
+            <p class="text-sm text-gray-600 italic">A quick scout --help will confirm it's ready!</p>
+            <div class="img-placeholder" data-img-src="./images/5.png"></div>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Verify AWS CLI v2</h3>
+            <p class="mb-2">Install & check AWS CLI version:</p>
+            <pre><code>curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip unzip awscliv2.zip 
+            sudo ./aws/install
+            aws --version</code></pre>
+            <link href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">
+            <p class="mb-2">
+            For detailed instructions, visit the 
+            <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html" 
+                class="text-blue-600 underline hover:text-blue-800" 
+                target="_blank" 
+                rel="noopener noreferrer">
+                official AWS CLI installation guide
+            </a>.
+            </p>
+            <div class="img-placeholder" data-img-src="./images/4.png"></div>
+        </section>
+
+        <hr class="my-12 border-gray-300 max-w-4xl mx-auto">
+
+        <!-- 2. Configuring AWS CLI with IAM Identity Center (SSO) -->
+        <section id="configure-sso" class="max-w-4xl mx-auto mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Secure Your Connection with AWS IAM Identity Center SSO</h2>
+            <p class="text-lg text-gray-700 mb-4">
+                Configuring AWS CLI to securely authenticate with my AWS account using IAM Identity Center. This is the modern and recommended way to manage access.
+            </p>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">IAM Identity Center Pre-flight Checks</h3>
+            <ul class="list-disc list-inside ml-4 mb-4">
+                <li>AWS IAM Identity Center must be enabled in your AWS Organization.</li>
+                <li>Your user needs to be configured in IAM Identity Center.</li>
+                <li>A Permission Set like ScoutSuite-SecurityAudit or ReadOnlyAccess must be assigned to your user for your target AWS account.</li>
+            </ul>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">The AWS configure sso Wizard Walkthrough</h3>
+            <p class="mb-2">Reactivate your virtual environment:</p>
+            <pre><code>source ~/scoutsuite_venv/bin/activate</code></pre>
+            <div class="img-placeholder" data-img-src="./images/2.png">
+            </div>
+
+            <p class="mb-2">Initiate the SSO Configuration Wizard:</p>
+            <pre><code>AWS configure sso</code></pre>
+            <div class="img-placeholder" data-img-src="./images/7.png">
+            </div>
+
+            <p class="mb-2">Follow the Interactive Prompts:</p>
+            <ul class="list-disc list-inside ml-4 mb-4">
+                <li>SSO session name: Pick a descriptive name e.g. joelscloud.</li>
+                <li>SSO start URL: Paste your AWS access portal URL found in IAM Identity Center Settings.</li>
+                <li>SSO region: Enter the region where your IAM Identity Center is deployed e.g. us-east-1.</li>
+                <li>SSO registration scopes: Just hit Enter for the default.</li>
+                <li>Browser Authentication: A browser will pop up. Log in with your SSO credentials, approve access, and then close the tab.
+                    <div class="img-placeholder" data-img-src="./images/13.png"></div>
+                    <div class="img-placeholder" data-img-src="./images/8.png"></div>
+                </li>
+                <li>Select AWS Account ID: Choose your account.</li>
+                <li>Select Permission Set/Role: Pick your read-only role e.g. ScoutSuite-SecurityAudit.</li>
+                <li>Default client Region: Enter the region where your demo AWS resources reside e.g. us-east-1.
+                    <div class="img-placeholder" data-img-src="./images/12.png"></div>
+                </li>
+                <li>CLI default output format: Hit Enter for json.</li>
+                <li>CLI profile name: Accept the suggestion or give it a simple name (e.g. demo-scoutsuite).
+                    <div class="img-placeholder" data-img-src="./images/10.png"></div>
+                </li>
+            </ul>
+        </section>
+
+        <hr class="my-12 border-gray-300 max-w-4xl mx-auto">
+
+        <!-- 3. Running the ScoutSuite Scan and Viewing the Report -->
+        <section id="run-scan" class="max-w-4xl mx-auto mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Run the Scan & Explore Your Report!</h2>
+            <p class="text-lg text-gray-700 mb-4">
+                With ScoutSuite installed and your AWS CLI configured for SSO, you're ready for the main event: running the security assessment and viewing the findings.
+            </p>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Sign In to Your SSO Session</h3>
+            <p class="mb-2">1.  Obtain temporary credentials:</p>
+            <p class="text-sm text-gray-600 italic">You'll need to run this command once per session (or if your credentials expire) to get fresh temporary credentials.</p>
+            <pre><code>/usr/local/bin/aws sso login --profile &lt;your-chosen-profile-name&gt;</code></pre>
+            <p class="text-sm text-gray-600 italic">(e.g. /usr/local/bin/aws sso login --profile ScoutSuite-SecurityAudit-804540873227`)</p>
+            <div class="img-placeholder" data-img-src="./images/17.png">
+                [Screenshot: Terminal showing aws sso login command]
+            </div>
+
+            <p class="mb-2">2.  Verify your credentials:</p>
+            <pre><code>/usr/local/bin/aws sts get-caller-identity --profile &lt;your-chosen-profile-name&gt;</code></pre>
+            <p class="text-sm text-gray-600 italic">Expected Output: A JSON response showing your AWS account ID and the ARN of the assumed SSO role.</p>
+            <div class="img-placeholder" data-img-src="./images/12.png">
+                [Screenshot: Terminal showing `aws sts get-caller-identity` output]
+            </div>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Execute the ScoutSuite Assessment</h3>
+            <p class="mb-2">1.  Run the ScoutSuite scan:</p>
+            <pre><code>scout aws --profile &lt;your-chosen-profile-name&gt;</code></pre>
+            <p class="text-sm text-gray-600 italic">(e.g., scout aws --profile ScoutSuite-SecurityAudit-804540873227)</p>
+            <p class="text-sm text-gray-600 italic">The scan will begin, displaying its progress directly in your terminal.</p>
+            <div class="img-placeholder" data-img-src="./images/15.png"></div>
+
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Access Your ScoutSuite Report</h3>
+            <p class="mb-2">1.  Locate the Report Directory:</p>
+            <p class="text-sm text-gray-600 italic">Once the scan completes, ScoutSuite will tell you where the report is saved. It's usually a directory like scoutsuite-report-aws within your home directory.</p>
+            <pre><code>cd ~/scoutsuite-report</code></pre>
+            <div class="img-placeholder" data-img-src="./images/16.png">
+                [Screenshot: Terminal showing cd into report directory]
+            </div>
+
+            <p class="mb-2">Open the Report in Your Web Browser:</p>
+            <pre><code>xdg-open aws-ScoutSuite-SecurityAudit-804540873227.html</code></pre>
+            <p class="text-sm text-gray-600 italic">This command will launch your Ubuntu's default web browser (like Firefox) and display the interactive ScoutSuite report, giving you a comprehensive overview of your cloud security posture.</p>
+            <div class="img-placeholder" data-img-src="./images/scout_report.png"></div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto text-center text-sm">
+            &copy; 2025 Tyrone Joel. All rights reserved.
+        </div>
+    </footer>
+
+    <!-- The Modal for image zoom -->
+    <div id="imageModal" class="modal">
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const imagePlaceholders = document.querySelectorAll('.img-placeholder');
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+
+            // Function to open the modal
+            const openModal = (imageSrc) => {
+                modalImage.src = imageSrc;
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            };
+
+            // Function to close the modal
+            const closeModal = () => {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+                modalImage.src = '';
+            };
+
+            // Add click listeners to each image placeholder
+            imagePlaceholders.forEach(placeholder => {
+                const imgSrc = placeholder.getAttribute('data-img-src');
+                if (imgSrc) {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = imgSrc;
+                    imgElement.alt = placeholder.textContent.trim();
+                    imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow-md', 'object-contain');
+                    placeholder.innerHTML = '';
+                    placeholder.appendChild(imgElement);
+                    placeholder.addEventListener('click', () => openModal(imgSrc));
+                }
+            });
+
+            // Add click listener to the modal to close it
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal || event.target === modalImage) {
+                    closeModal();
+                }
+            });
+
+            // Add keyboard listener for 'Escape' key
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modal.classList.contains('show')) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
